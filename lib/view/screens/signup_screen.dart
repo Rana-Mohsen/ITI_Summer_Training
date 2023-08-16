@@ -1,17 +1,19 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lab2/view/screens/home_screen.dart';
-import 'package:flutter_lab2/view/screens/signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+import 'login_screen.dart';
+
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
 
   TextEditingController emailController = TextEditingController();
@@ -53,54 +55,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 InkWell(
                   onTap: () async {
                     if (_formKey.currentState!.validate()) {
-                      bool user = await createUser(
-                          emailController.text, passwordController.text);
-
+                      bool user =await createUser(emailController.text, passwordController.text);
                       if (user) {
-                        final SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        await prefs.setString('email', emailController.text);
-                        snackBarMessage(context, "successfuly loged in");
+                      snackBarMessage(context, "Processing Data");
 
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    HomeScreen(email: emailController.text)));
-                      } else {
-                        snackBarMessage(context, "failed to log in");
-                      }
+                      Navigator.pop(context);
+                    } else {
+                      snackBarMessage(context, "registeration failed");
                     }
-                    ;
+                    }
                   },
                   child: Container(
-                    child: Center(child: Text("Login")),
+                    child: Center(child: Text("Sign up")),
                     width: double.infinity,
                     height: 40,
                     decoration: BoxDecoration(
                         color: Colors.lightBlue,
                         borderRadius: BorderRadius.all(Radius.circular(10))),
                   ),
-                ),
-                Text(
-                  "Forgot password? TAP ME",
-                  style: TextStyle(color: Colors.black54),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (builder) => SignupScreen()));
-                  },
-                  child: Text(
-                    "No Account? Sign Up",
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                  style: ButtonStyle(
-                      fixedSize: MaterialStatePropertyAll(Size(500, 40)),
-                      backgroundColor: MaterialStatePropertyAll(
-                          Color.fromARGB(255, 215, 215, 215))),
                 ),
               ]),
         ),
@@ -114,16 +86,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<bool> createUser(String email, String password) async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-      if (userCredential.user != null) return true;
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      if (userCredential.user!= null) return true;
     } on FirebaseAuthException catch (e) {
-      if (e.code == "wrong_password") {
-        snackBarMessage(context, "wrong password");
-      } else if (e.code == "invalid-email") {
-        snackBarMessage(context, "invalid email");
-      } else if (e.code == "user-not-found") {
-        snackBarMessage(context, "user does not exist");
+      if (e.code == "weak_password") {
+        snackBarMessage(context, "your password is weak");
+      } else if (e.code == "email-already-in-use") {
+        snackBarMessage(context, "email is already in use");
       }
     }
     return false;
